@@ -1,0 +1,231 @@
+<%- include layout/header.ejs %>
+<ul class="nav nav-tabs">
+  <li><a href="/home">Home</a></li>
+  <li><a href="/postnewcar">Post new car</a></li>
+  <li><a href="/viewmycars">View my cars</a></li>
+  <li class="active"><a href="/bookinghistory">Booking history</a></li>
+  <li><a href="/logout">Log out</a></li>
+</ul>
+
+<div id = "bookingHistoryFrame">
+  <table cellpadding="11">
+    <tr>
+        <td class="beforeinput">Welcome to MultiBNB: <%=user%> </td>
+    </tr>
+    <tr>
+        <td class="beforeinput">The cars you own as follow</td>
+    </tr>
+  </table>
+  <div id = "bookinghistory"> 
+    <table class="table table-hover">
+      </tr>
+        <th>Owner</th>
+        <th>Type</th>
+        <th>Start</th>
+        <th>End</th>
+        <th>Total Price</th>
+        <th>Location</th>
+        <th>Action</th>
+      </tr> 
+    </table>    
+  </div>
+</div>
+<div id = "mapbookinghistory"></div>
+
+
+
+<script>
+//Initialize Map
+  var	map;
+  var infowindow;
+  var searchPoint;
+  var curuser= <%- JSON.stringify(user) %>;     //Current User 
+  //var history = [
+
+      //{owner:"lan",carID:5,cartype:"mini",latitude:40.8,longitude:-73.95,valid:1,start:2016-12-15,end:2016-12-18,end:totalprice:400},
+
+  //];
+  var markers = [];
+  var historys = []; 
+  var selectedcar;                              //The car you select to book
+  var address = "Click again to get the address";
+  //var ip="http://localhost:8000";
+  var currentmarker;
+  var selectedrow = -1;
+
+  function initMap() {
+    var mapOptions = {
+      center: {lat: 40.806, lng: -73.963},
+      scrollwheel: false,
+      zoom: 12,
+      disableDoubleClickZoom: true 
+    };
+    // Create a map object and specify the DOM element for display.
+    map = new google.maps.Map(document.getElementById("mapbookinghistory"), mapOptions);
+    infowindow = new google.maps.InfoWindow({
+      maxWidth: 600
+    });
+    //var geocoder = new google.maps.Geocoder;
+    // Move to current location.
+    gethistory();
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(function(position) {
+        var pos = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        };
+
+        map.setCenter(pos);
+        placeSearchPoint(pos);
+      });
+    }
+        //Double click
+    google.maps.event.addListener(map, 'dblclick', function(e) {
+      placeSearchPoint(e.latLng);
+    });
+    function placeSearchPoint(position) {
+      var geocoder = new google.maps.Geocoder;
+      var image = {
+        url: humaniconUrl,
+        // This marker is 20 pixels wide by 32 pixels high.
+        size: new google.maps.Size(30, 30),
+        // The origin for this image is (0, 0).
+        origin: new google.maps.Point(0, 0),
+        // The anchor for this image is the base of the flagpole at (0, 32).
+        anchor: new google.maps.Point(15, 15)
+      };
+      if(!$.isEmptyObject(searchPoint)){
+        searchPoint.setMap(null);
+        searchPoint = null;
+      }
+      searchPoint = new google.maps.Marker({
+        position: position,
+        map: map,
+        icon: image
+      });
+    }    
+  }
+
+  function gethistory(){
+    $.ajax({
+      type: "GET",
+      url: "getorderhistory",
+      data: {userID:curuser},
+      dataType: 'json',
+      success: getorderhistory_handler,
+      error: function(XMLHttpRequest, textStatus, errorThrown){
+       alert('System message'+XMLHttpRequest+ textStatus + errorThrown);
+      }
+    });
+  };
+
+  function getorderhistory_handler(msgResult){
+    historys = msgResult;
+    showorderhistory();
+    Markers();
+  };
+  function showorderhistory(){
+    var htmlcode =  "<table class='table table-hover'> \
+                    <tr> \
+                        <th>Owner</th> \
+                        <th>Type</th> \
+                        <th>Start</th> \
+                        <th>End</th> \
+                        <th>Total Price</th> \
+                        <th>Location</th> \
+                        <th>Action</th> \
+                    </tr>" 
+    for(var i = historys.length-1;i>=0;i--){
+      historys[i].row=i;
+      htmlcode +=   "<tr id='tr"+i+"'> \
+                        <td>"+historys[i].owner+"</td> \
+                        <td>"+historys[i].cartype+"</td> \
+                        <td>"+tojsdate(historys[i].start)+"</td> \
+                        <td>"+tojsdate(historys[i].end)+"</td> \
+                        <td>$"+historys[i].totalprice+"</td> \
+                        <td><input type='image' src='img/car1small.png' onclick = 'locate("+i+")'></td>"
+      var curdate = new Date();
+      curdate = new Date(curdate.toLocaleDateString());
+      var startdate = new Date(tojsdate(historys[i].start));
+        if(curdate<startdate){                  
+          htmlcode +="<td><button class='button button-raised button-caution button-tiny button-pill' onclick = 'deleteorder("+i+")'>DELETE</button></td>"
+        }else{
+          htmlcode +="<td>Transaction finished</td>"
+        }
+
+      htmlcode += "</tr>" 
+    }
+    htmlcode += "</table>";
+    document.getElementById("bookinghistory").innerHTML =  htmlcode;   
+  }
+  function tojsdate(sqldate){
+    console.log(typeof(sqldate))
+    var temp = sqldate.toString().split('T')[0];
+    temp = temp.split('-');
+    var jsdate=temp[1]+'/'+temp[2]+'/'+temp[0];
+    return jsdate;
+  }
+  function locate(i){
+    if(!$.isEmptyObject(currentmarker)){
+      currentmarker.setMap(null);    
+    }  
+    markers[i].setMap(map);
+    map.panTo(markers[i].position);
+    currentmarker=markers[i];
+    if(selectedrow!=-1){
+      document.getElementById("tr"+selectedrow).style.backgroundColor='White';    
+    }  
+    selectedrow = i;
+    document.getElementById("tr"+selectedrow).style.backgroundColor='LightGray';     
+  }
+
+  function deleteorder(i){
+  	$.ajax({
+      type: "GET",
+      url: "deleteorder",
+      data: {carorderID:historys[i].carorderID},
+      dataType: 'json',
+      success: deleteorder_handler,
+      error: function(XMLHttpRequest, textStatus, errorThrown){
+       alert('System message'+XMLHttpRequest+ textStatus + errorThrown);
+      }
+    });
+  }
+  function deleteorder_handler(msgResult){
+  	//alert(msgResult);
+  	gethistory();
+  }
+  function Markers(){
+    clearMarkers();
+    var i = 0;
+    var caricon = {
+      url: cariconUrl,
+      size: new google.maps.Size(80, 25),
+      origin: new google.maps.Point(0, 0),
+      anchor: new google.maps.Point(40, 12)
+    };
+    $.each(historys,function(key,history){
+      var position = new google.maps.LatLng(history.latitude,history.longitude);
+      var marker = new google.maps.Marker({
+        position: position,
+        map: null,
+        title: i.toString(),
+        icon: caricon
+      });
+          
+      markers.push(marker);
+      i++;
+    })       
+  }
+
+  function clearMarkers(){
+    $.each(markers,function(key,marker){
+      marker.setMap(null); 
+      marker = null;
+    })
+    //Clear Cluster Marksers
+    markers = [];
+  }
+
+</script>
+<%- include layout/footer.ejs %>

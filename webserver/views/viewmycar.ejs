@@ -1,0 +1,555 @@
+<%- include layout/header.ejs %>
+<ul class="nav nav-tabs">
+  <li><a href="/home">Home</a></li>
+  <li><a href="/postnewcar">Post new car</a></li>
+  <li class="active"><a href="/viewmycars">View my cars</a></li>
+  <li><a href="/bookinghistory">Booking history</a></li>
+  <li><a href="/logout">Log out</a></li>
+</ul>
+
+<div id = "bookingHistoryFrame">
+  <table cellpadding="11">
+    <tr>
+        <td class="beforeinput">Welcome to MultiBNB: <%=user%> </td>
+    </tr>
+    <tr>
+        <td class="beforeinput">The cars you own as follow</td>
+    </tr>
+  </table>
+  <div id = "mycars"> 
+    <table class="table table-hover">
+      </tr>
+        <th>Type&nbsp</th>
+        <th>Price&nbsp</th>
+        <th>Location&nbsp</th>
+        <th>Status&nbsp</th>
+        <th>Update&nbsp</th>
+        <th>View Details&nbsp</th>
+      </tr> 
+    </table>    
+  </div>
+</div>
+<div id = "mapviewmycars"></div>
+
+
+
+<script>
+//Initialize Map
+  var	map;
+  var infowindow;
+  var searchPoint;
+  var curuser= <%- JSON.stringify(user) %>;     //Current User 
+  //var history = [
+
+      //{owner:"lan",carID:5,cartype:"mini",latitude:40.8,longitude:-73.95,valid:1,start:2016-12-15,end:2016-12-18,end:totalprice:400},
+
+  //];
+  var markers = [];
+  var mycars = []; 
+  var selectedcar;                              //The car you select to book
+  var address = "Click again to get the address";
+  //var ip="http://localhost:8000"
+  var currentmarker;
+  var imagepaths = [];
+  var humanicon;
+  var caricon;
+  var curicon; 
+  var updating=false;
+  var selectedrow = -1;
+
+  function initMap() {
+    var mapOptions = {
+      center: {lat: 40.806, lng: -73.963},
+      scrollwheel: false,
+      zoom: 12,
+      disableDoubleClickZoom: true 
+    };
+    // Create a map object and specify the DOM element for display.
+    map = new google.maps.Map(document.getElementById('mapviewmycars'), mapOptions);
+    infowindow = new google.maps.InfoWindow({
+      maxWidth: 600
+    });
+    humanicon = {
+      url: humaniconUrl,
+      size: new google.maps.Size(30, 30),
+      origin: new google.maps.Point(0, 0),
+      anchor: new google.maps.Point(15, 15)
+    };
+    caricon = {
+      url: cariconUrl,
+      size: new google.maps.Size(80, 25),
+      origin: new google.maps.Point(0, 0),
+      anchor: new google.maps.Point(40, 12)
+    };
+    //var geocoder = new google.maps.Geocoder;
+    // Move to current location.
+    getmycars();
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(function(position) {
+        var pos = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        };
+
+        map.setCenter(pos);
+      });
+    }
+        //Double click
+    google.maps.event.addListener(map, 'dblclick', function(e) {
+      if(updating){
+        placeSearchPoint(e.latLng);
+      }
+    });
+  }
+  function placeSearchPoint(position) {
+    if(!$.isEmptyObject(searchPoint)){
+      searchPoint.setMap(null);
+      searchPoint = null;
+    }
+    searchPoint = new google.maps.Marker({
+      position: position,
+      map: map,
+      icon: caricon
+    });
+    try{
+      document.getElementById("updatelat").innerHTML=searchPoint.position.lat();
+      document.getElementById("updatelng").innerHTML=searchPoint.position.lng();
+    }catch(err){
+      console.log(err);
+    }
+  }  
+
+
+
+  function getmycars(){
+    $.ajax({
+      type: "GET",
+      url: "getmycars",
+      data: {userID:curuser},
+      dataType: 'json',
+      success: getmycars_handler,
+      error: function(XMLHttpRequest, textStatus, errorThrown){
+       alert('System message'+XMLHttpRequest+ textStatus + errorThrown);
+      }
+    });
+  };
+
+  function getmycars_handler(msgResult){
+    mycars = msgResult;
+    showmycars();
+    Markers();
+  };
+
+  function showmycars(){
+    var htmlcode =  "<table class='table table-hover'> \
+                      <tr> \
+                        <th>Type&nbsp</th> \
+                        <th>Price&nbsp</th> \
+                        <th>Location&nbsp</th> \
+                        <th>Status&nbsp</th> \
+                        <th>Update&nbsp</th> \
+                        <th>View Details&nbsp</th> \
+                      </tr>" 
+    for(var i = mycars.length-1;i>=0;i--){
+      htmlcode +=   "<tr id='tr"+i+"'> \
+                        <td>"+mycars[i].cartype+"</td> \
+                        <td>$"+mycars[i].price+"</td> \
+                        <td><input type='image' src='img/car1small.png' onclick = 'locate("+i+")'></td> \
+                        <td> <select id='status"+i+"' onchange ='changecarstatus("+i+")'>"
+      if(mycars[i].valid == 1){
+        htmlcode +=   "<option value=1 selected>Active</option> \
+                      <option value=0 >Closed</option>" 
+      }else{
+        htmlcode +=  "<option value=1 >Active</option> \
+                      <option value=0 selected>Closed</option>"
+      }
+      htmlcode += "</select> </td>"
+      htmlcode +="<td><button class='button button-small button-raised button-primary button-pill' onclick='updatecarwindow("+i+")'>Update</button></td>"  
+      htmlcode +="<td><button class='button button-small button-raised button-action button-pill' onclick='orderofcar("+i+")'>Details</button></td>"            
+      htmlcode += "</tr>" 
+    }
+    htmlcode += "</table>";
+    document.getElementById("mycars").innerHTML =  htmlcode;    
+  }
+
+  function changecarstatus(i){
+    var carID = mycars[i].carID;
+    var valid = document.getElementById('status'+i).value;
+    mycars[i].valid = valid;
+    locate(i);
+    //alert(carID+","+valid);
+    $.ajax({
+      type: "GET",
+      url: "changecarstatus",
+      data: {carID:carID,valid:valid},
+      dataType: 'json',
+      success: changecarstatus_handler,
+      error: function(XMLHttpRequest, textStatus, errorThrown){
+       alert('System message'+XMLHttpRequest+ textStatus + errorThrown);
+      }
+    });    
+  }
+
+  function changecarstatus_handler(msgResult){
+    alert(msgResult);
+    console.log(msgResult);
+  };
+
+  function orderofcar(i){
+    carID = mycars[i].carID;
+    locate(i);
+    selectedcar = mycars[i];
+    $.ajax({
+      type: "GET",
+      url: "orderofcar",
+      data: {carID:carID},
+      dataType: 'json',
+      success: orderofcar_handler,
+      error: function(XMLHttpRequest, textStatus, errorThrown){
+       alert('System message'+XMLHttpRequest+ textStatus + errorThrown);
+      }
+    });  
+  }
+  function orderofcar_handler(msgResult){
+    var orders = msgResult;
+    var htmlcode = "<div style='position:relative text-align:center;font-size:14px; background: #FFFFFF;max-height =400px; max-witdh=600px;'>";
+    htmlcode += "<img src='img/whitebg.png' style='overflow:hidden;height:400px;width:600px'/><div style='position:absolute;  left:10px; top:10px; width:580px'>";
+    htmlcode +=  "<table> \
+                    <tr> \
+                        <th>Owner&nbsp&nbsp&nbsp</th> \
+                        <th>CarID&nbsp&nbsp&nbsp</th> \
+                        <th>Type&nbsp&nbsp&nbsp</th> \
+                        <th>Price&nbsp&nbsp&nbsp</th> \
+                        <th>Latitude&nbsp&nbsp&nbsp</th> \
+                        <th>Longitude&nbsp&nbsp&nbsp</th> \
+                    </tr>\
+                    <tr> \
+                        <td>"+curuser+"</td> \
+                        <td>"+selectedcar.carID+"</td> \
+                        <td>"+selectedcar.cartype+"</td> \
+                        <td>"+selectedcar.price+"</td> \
+                        <td>"+selectedcar.latitude+"</td> \
+                        <td>"+selectedcar.longitude+"</td> \
+                    </tr>\
+                  </table>" 
+    htmlcode += "</div><div id='orderofcar'>";
+    htmlcode +=  "<table class='table table-hover'> \
+                    <tr> \
+                        <th>Costomer</th> \
+                        <th>Type</th> \
+                        <th>Start</th> \
+                        <th>End</th> \
+                        <th>Booking Price</th> \
+                        <th>Total Price</th> \
+                    </tr>";
+
+    for(var i=orders.length-1;i>=0;i--){
+        htmlcode +=  "<tr> \
+                        <td>"+orders[i].costomer+"</td> \
+                        <td>"+orders[i].cartype+"</td> \
+                        <td>"+tojsdate(orders[i].start)+"</td> \
+                        <td>"+tojsdate(orders[i].end)+"</td> \
+                        <td>"+orders[i].bookingprice+"</td> \
+                        <td>"+orders[i].totalprice+"</td> \
+                    </tr>"; 
+    }    
+    htmlcode+="</table></div></div>";    
+    var diag = new Dialog();
+    diag.Width = 600;
+    diag.Height = 400;
+    diag.Left = "5%";
+    diag.Title = "Details for this car";
+    diag.InnerHtml=htmlcode;
+    diag.OKEvent = function(){diag.close();};
+    diag.show();
+    searchimage(selectedcar.carID,searchimagedetails_handler);
+  }
+
+//serach image
+  function searchimage(carID,functionname){
+    $.ajax({ 
+      url : searchimgurl, 
+      type : 'post', 
+      data : {carID:carID}, 
+      dataType : "json", 
+      async : false, 
+      success : functionname,
+      error: function(XMLHttpRequest, textStatus, errorThrown){
+        alert('System message'+'Time out' + textStatus, 'info');
+      } 
+    });  
+  }
+
+  function searchimagedetails_handler(msgResult){
+    if(msgResult.length>0){
+           var htmlcode =    "<div id='myCarousel' class='carousel slide' align='center'> \
+                              <!-- 轮播（Carousel）指标 --> \
+                              <ol class='carousel-indicators'> \
+                                <li data-target='#myCarousel' data-slide-to='0' class='active'></li>" 
+           for(var i=1;i<msgResult.length;i++){                     
+               htmlcode +=  "<li data-target='#myCarousel' data-slide-to='"+i+"'></li>"
+            } 
+               htmlcode +=  "</ol>   \
+                              <!-- 轮播（Carousel）项目 --> \
+                              <div class='carousel-inner'> \
+                                <div class='item active'> \
+                                    <img src='"+destiny+msgResult[0]+"' style='width:auto;height:200px;overflow:hidden;'> \
+                                </div>"
+          for(var i=1;i<msgResult.length;i++){                      
+               htmlcode +=    " <div class='item'> \
+                                    <img src='"+destiny+msgResult[i]+"' style='width:auto;height:200px;overflow:hidden;'> \
+                                </div>"
+            }                     
+               htmlcode +=   "</div> \
+                              <!-- 轮播（Carousel）导航 --> \
+                              <a class='carousel-control left' href='#myCarousel' data-slide='prev'>&lsaquo;</a> \
+                              <a class='carousel-control right' href='#myCarousel' data-slide='next'>&rsaquo;</a> \
+                            </div>"
+
+          document.getElementById("orderofcar").innerHTML += htmlcode;
+            
+    }else{
+              
+    }
+  }
+
+
+
+
+
+//Update car
+  function updatecarwindow(i){
+    locate(i);
+    currentmarker.setMap(null);
+    updating = true;
+    placeSearchPoint(currentmarker.position);    
+    var htmlcode = "<div style='position:relative; font-size:14px; max-height:500px; max-witdh:600px;overflow:hidden'>";
+    htmlcode += "<img src='img/whitebg.png' style='overflow:hidden;height:500px;width:600px'/><div style='position:absolute;  left:10px; top:10px; width:580px'>";
+    htmlcode +=  "<table style='position:absolute;  left:10px; top:10px; width:500px'> \
+                    <tr> \
+                        <td>Owner:</td> \
+                        <td>"+curuser+"</td> \
+                    </tr>\
+                    <tr> \
+                        <td>CarID:</td> \
+                        <td>"+mycars[i].carID+"</td> \
+                    </tr>\
+                        <td>Status</td>\
+                        <td> <select id='updatestatus'>"
+    if(mycars[i].valid == 1){
+        htmlcode +=   "<option value=1 selected>Active</option> \
+                      <option value=0 >Closed</option>" 
+    }else{
+        htmlcode +=  "<option value=1 >Active</option> \
+                      <option value=0 selected>Closed</option>"
+    }
+    htmlcode += "</select> </td>\
+                    <tr> \
+                        <td>Cartype:</td> \
+                        <td><input type='text' id='updatetype' style='height:25px;' value='"+mycars[i].cartype+"' required ></td> \
+                    </tr>\
+                    <tr> \
+                        <td>Price:</td> \
+                        <td><input type='number' id='updateprice' style='height:25px;' value='"+mycars[i].price+"' required ></td> \
+                    </tr>\
+                    <tr> \
+                        <td>Position:</td> \
+                        <td>Double Click on Map</td> \
+                    </tr>\
+                    <tr> \
+                        <td>Latitude:</td> \
+                        <td id='updatelat'>"+searchPoint.position.lat()+"</td> \
+                    </tr>\
+                    <tr> \
+                        <td>Longitude:</td> \
+                        <td id='updatelng'>"+searchPoint.position.lng()+"</td> \
+                    </tr>\
+                    <tr><td>Upload image for cars</td></tr>\
+                    <tr>\
+                      <td> <input type='file' id='carimage' multiple='multiple'></td> \
+                      <td> <button class='button button-tiny button-caution button-pill' onclick='clearinput();'>clear</button></td> \
+                    </tr> \
+                  </table>" 
+    htmlcode +="</div><div id='updatecarimg'></div></div>";
+    var diag = new Dialog();
+    diag.Width = 600;
+    diag.Height = 500;
+    diag.Left = "5%";
+    diag.Top = "30%";
+    diag.Title = "Details for this car";
+    diag.InnerHtml=htmlcode;
+    diag.OKEvent = function(){updatecar(i);};
+    diag.CancelEvent = function(){searchPoint.setMap(null);locate(i);updating=false;diag.close();}
+    diag.show();
+    diag.okButton.value = "Update";
+    diag.addButton("close","Close",function(){
+      searchPoint.setMap(null);locate(i);updating=false;diag.close();
+    });
+    searchimage(mycars[i].carID,searchimageupdate_handler);
+
+  }
+  function updatecar(i){
+    $.ajax({
+      type: "GET",
+      url: "updatecar",
+      data: {carID:mycars[i].carID,cartype:document.getElementById("updatetype").value,price:document.getElementById("updateprice").value,lat:searchPoint.position.lat(),lng:searchPoint.position.lng,valid:document.getElementById("updatestatus").value},
+      dataType: 'json',
+      success: updatecar_handler,
+      error: function(XMLHttpRequest, textStatus, errorThrown){
+       alert('System message'+XMLHttpRequest+ textStatus + errorThrown);
+      }
+    });  
+    postimage(mycars[i].carID);
+  }
+  function updatecar_handler(msgResult){
+    getmycars();
+    alert(msgResult);
+  }
+  function postimage(carID){
+    var files = document.getElementById("carimage").files;
+    var formData = new FormData();
+    //alert("post");
+    if(files.length>0){
+      for(var i=0;i<files.length;i++){
+        var file = files[i];
+        // Check the file type.
+        if (!file.type.match('image.*')) {
+          console.log("not image");
+          continue;
+        }
+        formData.append("carimage",file,file.name);
+      }
+      formData.append("carID",carID);
+      $.ajax({ 
+        url : postimgurl, 
+        type : 'post', 
+        data : formData, 
+        cache : false, 
+        contentType : false, 
+        processData : false, 
+        dataType : "json", 
+        success : function(data) {
+          clearinput(); 
+          searchimage(carID,searchimageupdate_handler);
+          console.log(data);
+        //alert(data);
+        },
+        error: function(XMLHttpRequest, textStatus, errorThrown){
+          alert('System message'+'Time out' + textStatus, 'info');
+        } 
+      }); 
+    }
+  } 
+  function searchimageupdate_handler(msgResult){
+    imagepaths = [];
+    if(msgResult.length>0){
+      var i=0;
+      var htmlcode ="<table>";
+      for(i=0;i<msgResult.length-3;i+=4){
+        htmlcode +="<tr>";
+        for(var j=i;j<i+4;j++){
+          imagepaths.push(msgResult[j]);
+          htmlcode +="<td> \
+                        <div style='height:200px;width:140px;text-align:center'> \
+                        <img src='"+destiny+msgResult[j]+"' style='width:auto;height:auto;max-width:140px;max-height:100px;overflow:hidden;'> \
+                        <button class='button button-tiny button-caution button-pill' onclick='deleteoneimage("+j+")'>delete</button>\
+                        </div> \
+                      </td>";
+        }
+        htmlcode += "</tr>";
+      }
+      htmlcode += "<tr>";
+      for(;i<msgResult.length;i++){
+          imagepaths.push(msgResult[i]);
+          htmlcode +="<td> \
+                        <div style='height:200px;width:140px;text-align:center'> \
+                        <img src='"+destiny+msgResult[i]+"' style='width:auto;height:auto;max-width:140px;max-height:100px;overflow:hidden;'> \
+                        <button class='button button-tiny button-caution button-pill' onclick='deleteoneimage("+i+")'>delete</button>\
+                        </div> \
+                      </td>";
+      }
+      htmlcode += "</tr>";
+      document.getElementById('updatecarimg').innerHTML = htmlcode;
+    }
+  }
+
+  function deleteoneimage(data){
+      $.ajax({ 
+        url : deleteoneimgurl, 
+        type : 'post', 
+        async:true,
+        data : {path:imagepaths[data]}, 
+        dataType : "json", 
+        success : function(msgResult) { 
+          searchimage(mycars[selectedrow].carID,searchimageupdate_handler);
+          console.log(msgResult);
+        //alert(data);
+          if(imagepaths.length==0){
+            document.getElementById('updatecarimg').innerHTML="";
+          }
+        },
+        error: function(XMLHttpRequest, textStatus, errorThrown){
+          alert('System message'+'Time out' + textStatus, 'info');
+        } 
+      });     
+    console.log(imagepaths[data]);
+  }
+
+
+
+
+  function tojsdate(sqldate){
+    var temp = sqldate.toString().split('T')[0];
+    temp = temp.split('-');
+    var jsdate=temp[1]+'/'+temp[2]+'/'+temp[0];
+    return jsdate;
+  }
+  function locate(i){
+    if(!$.isEmptyObject(currentmarker)){
+      currentmarker.setMap(null);    
+    }  
+    markers[i].setMap(map);
+    map.panTo(markers[i].position);
+    currentmarker=markers[i];
+    if(selectedrow!=-1){
+      document.getElementById("tr"+selectedrow).style.backgroundColor='White';    
+    }  
+    selectedrow = i;
+    document.getElementById("tr"+selectedrow).style.backgroundColor='LightGray';   
+  }
+
+  function Markers(){
+    clearMarkers();
+    var i = 0;
+    $.each(mycars,function(key,car){
+      var position = new google.maps.LatLng(car.latitude,car.longitude);
+      var marker = new google.maps.Marker({
+        position: position,
+        map: null,
+        title: i.toString(),
+        icon: caricon
+      });
+          
+      markers.push(marker);
+      i++;
+    })       
+  }
+
+  function clearMarkers(){
+    $.each(markers,function(key,marker){
+      marker.setMap(null); 
+      marker = null;
+    })
+    //Clear Cluster Marksers
+    markers = [];
+  }
+
+  function clearinput(){
+    var file = $("#carimage") ;
+    file.after(file.clone().val(""));      
+    file.remove();  
+  }
+
+
+</script>
+<%- include layout/footer.ejs %>
