@@ -1,0 +1,135 @@
+<%- include layout/header.ejs %>
+<!--This page is only for test and debug-->
+<ul class="nav nav-tabs">
+  <li class="active"><a href="#">Home</a></li>
+  <li><a href="#">Post new car</a></li>
+  <li><a href="#">View my cars</a></li>
+  <li><a href="#">Booking history</a></li>
+  <li><a href="#">Log out</a></li>
+</ul>
+<div id = "searchCar">
+  <table cellpadding="11">
+  </table>
+  <table cellpadding="11">
+    <tr>
+        <td class="beforeinput">CarID:</td><td> <input type="number" id="carID" value=11 required ></td>
+   	</tr>
+   	<tr>
+        <td class="beforeinput"> </td>
+        <td>
+          <button class="button button-3d button-primary button-rounded" onclick="postimage()">Post</button>
+        </td>
+        <td>
+          <button class="button button-3d button-action button-rounded" onclick="searchimage()">Search</button>
+        </td>
+    </tr>
+  </table>
+  <p> </p>
+  <div id = "imagearea">
+    <tr class="beforeinput">Upload image for cars</tr>
+    <tr> <input type="file" id="carimage" multiple="multiple"></tr>
+    <td> <button class="button button-3d button-caution button-pill" onclick="clearinput();">clear</button></td>
+  </div>
+</div>
+<div id = "maphome"><div>
+
+<script>
+//Initialize Map
+var destiny = IPOFIMAGESERVER;
+
+var posturl = destiny+"/postimage";
+var searchurl = destiny+"/searchimage";
+function postimage(){
+  var files = document.getElementById("carimage").files;
+  var formData = new FormData();
+  var carID = document.getElementById("carID").value;
+  //alert("post");
+  if(files.length>0){
+    for(var i=0;i<files.length;i++){
+      var file = files[i];
+      // Check the file type.
+      if (!file.type.match('image.*')) {
+        console.log("not image");
+        continue;
+      }
+      console.log(file.name);
+      formData.append("carimage",file,file.name);
+    }
+    formData.append("carID",carID);
+    $.ajax({ 
+      url : posturl, 
+      type : 'post', 
+      data : formData, 
+      cache : false, 
+      contentType : false, 
+      processData : false, 
+      dataType : "json", 
+      success : function(data) {
+        clearinput(); 
+        console.log(data);
+        //alert(data);
+      },
+      error: function(XMLHttpRequest, textStatus, errorThrown){
+        alert('System message'+'Time out' + textStatus, 'info');
+      } 
+    }); 
+  }
+} 
+
+function searchimage(){
+  var carID = document.getElementById("carID").value;
+  //alert("post");
+  $.ajax({ 
+    url : searchurl, 
+    type : 'post', 
+    data : {carID:carID}, 
+    dataType : "json", 
+    success : searchimage_handler,
+    error: function(XMLHttpRequest, textStatus, errorThrown){
+        alert('System message'+'Time out' + textStatus, 'info');
+    } 
+  });  
+}
+
+function searchimage_handler(msgResult){
+  if(msgResult.length>0){
+
+           var htmlcode =    "<div id='myCarousel' class='carousel slide' align='center'> \
+                              <!-- 轮播（Carousel）指标 --> \
+                              <ol class='carousel-indicators'> \
+                                <li data-target='#myCarousel' data-slide-to='0' class='active'></li>" 
+           for(var i=1;i<msgResult.length;i++){                     
+               htmlcode +=  "<li data-target='#myCarousel' data-slide-to='"+i+"'></li>"
+            } 
+               htmlcode +=  "</ol>   \
+                              <!-- 轮播（Carousel）项目 --> \
+                              <div class='carousel-inner'> \
+                                <div class='item active'> \
+                                    <img src='"+destiny+msgResult[0]+"' style='width:auto;height:200px;overflow:hidden;'> \
+                                </div>"
+          for(var i=1;i<msgResult.length;i++){                      
+               htmlcode +=    " <div class='item'> \
+                                    <img src='"+destiny+msgResult[i]+"' style='width:auto;height:200px;overflow:hidden;'> \
+                                </div>"
+            }                     
+               htmlcode +=   "</div> \
+                              <!-- 轮播（Carousel）导航 --> \
+                              <a class='carousel-control left' href='#myCarousel' data-slide='prev'>&lsaquo;</a> \
+                              <a class='carousel-control right' href='#myCarousel' data-slide='next'>&rsaquo;</a> \
+                            </div>"                    
+
+
+            document.getElementById("maphome").innerHTML=htmlcode;
+  }else{
+      document.getElementById("maphome").innerHTML="";
+  }
+}
+
+function clearinput(){
+  var file = $("#carimage") ;
+  file.after(file.clone().val(""));      
+  file.remove();  
+}
+
+</script>
+<%- include layout/footer.ejs %>
