@@ -8,11 +8,13 @@ module.exports = {
     	res.render('imagehome',{page_title:"Imagehome"});
     },
     postimage: function postimage(req , res ){
+        //Set the CORS ACCESS
         res.header("Access-Control-Allow-Origin", "*");
         res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
         var form = new multiparty.Form();
         form.uploadDir = "./public/carimg/"
         form.parse(req, function (err, fields, files) {
+            //Use MD5 to encrypt the carID
             var prefix = crypto.createHash('md5').update(fields.carID[0]).digest('hex').substring(0,16);
             console.log(prefix);            
             for(var i=0;i<files.carimage.length;i++){
@@ -39,6 +41,7 @@ module.exports = {
     },
 
     searchimage: function searchimage(req , res ){
+        //Set the CORS ACCESS
         res.header("Access-Control-Allow-Origin", "*");
         res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
         var carID = req.body.carID;
@@ -58,6 +61,7 @@ module.exports = {
         });
     },
     deleteoneimage: function deleteoneimage(req , res ){
+        //Set the CORS ACCESS
         res.header("Access-Control-Allow-Origin", "*");
         res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
         var path = req.body.path;
