@@ -7,7 +7,8 @@
 
 
 3.Frontend:
-  The website of multibnb includes pages of login, register, home, view my cars, post new cars and booking history.
+
+The website of multibnb includes pages of login, register, home, view my cars, post new cars and booking history.
   
 Log in page: Users with account can log in by entering their name and password. New users can click the sign-up button to get the register webpage.
 
