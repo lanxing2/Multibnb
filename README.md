@@ -22,7 +22,7 @@ View my cars page: The owner of cars can update the information of cars and add 
 Booking history page: the page shows booking history of users, including owner, type of cars, star and end date, price, location and transaction location. They can also cancel their order in this page.
 
 
-If you want to visit our website, you can go to the following link. The website is not always open because AWS free tier only provide 750h quota per month but our system requires two instances. Please contact me before your visit.
+If you want to visit our website, you can go to the following link. The website is not always open due to the limit of AWS free tier. Please contact me before your visit.
  	http://multibnb.us-east-1.elasticbeanstalk.com
 
 
