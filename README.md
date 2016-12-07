@@ -9,7 +9,8 @@
 
 3.Frontend
 
-  The website of multibnb includes pages of login, register, home, view my cars, post new cars and booking history. 
+  The website of multibnb includes pages of login, register, home, view my cars, post new cars and booking history.
+  
 Log in page: Users with account can log in by entering their name and password. New users can click the sign-up button to get the register webpage.
 
 Home page: After log in, users will be redirected to the home page. Users who want to rent cars can decide start and end date. By double clicking on the map, users decide where they want to rent cars and enter the distance range from the point. Cars available during the range will show up and the users can book these cars.
@@ -21,7 +22,7 @@ View my cars page: The owner of cars can update the information of cars and add 
 Booking history page: the page shows booking history of users, including owner, type of cars, star and end date, price, location and transaction location. They can also cancel their order in this page.
 
 
-	If you want to visit our website, you can go to the following link. The website is not always open because AWS free tier only provide 750h quota per month but our system requires two instances. Please contact me before your visit.
+If you want to visit our website, you can go to the following link. The website is not always open because AWS free tier only provide 750h quota per month but our system requires two instances. Please contact me before your visit.
  	http://multibnb.us-east-1.elasticbeanstalk.com
 
 
