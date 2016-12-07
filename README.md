@@ -1,5 +1,4 @@
 1.Introduction:
-
   Multibnb is a website which users can rent in and rent our cars. User with spare cars can post there cars on the website. And user who want to rent cars can search the available cars in the area they select and booking the cars by paying to the owner of cars. User can also review their orders and change the details of cars. The owner of car can also add or delete photos to the car. It is the project for Next Generation Network course
 
 
@@ -7,8 +6,7 @@
   The webserver is running on AWS Elasticbeanstalk and users can visit the website freely. The car data and user data are stored in AWS RDS, a relational database. And separated image-server is deployed on AWS EC2 to store the photos of cars which were uploaded by the users. The paths of photos are stored in mongoDB and are updated synchronic with the photos. The backend of webserver and image-server are written by node.js
 
 
-3.Frontend
-
+3.Frontend:
   The website of multibnb includes pages of login, register, home, view my cars, post new cars and booking history.
   
 Log in page: Users with account can log in by entering their name and password. New users can click the sign-up button to get the register webpage.
