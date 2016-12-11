@@ -28,7 +28,7 @@ If you want to visit our website, you can go to the following link. The website 
  	http://multibnb.us-east-1.elasticbeanstalk.com
 
 
-Author: Xing Lan      Wenjin Guo
+Author: Xing Lan      Wenjing Guo
 
 
 12/11/2016 Angular Update merge login and register page
