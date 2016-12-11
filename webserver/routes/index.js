@@ -4,7 +4,6 @@ var router = express.Router();
 var checkNotLogin = require('../routes/check').checkNotLogin;
 var checkLogin = require('../routes/check').checkLogin;
 
-var regist = require("../routes/regist");
 var homecontrol = require("../routes/homecontrol");
 var logcontrol = require("../routes/logcontrol");
 var bookinghistory = require("../routes/bookinghistorycontrol");
@@ -17,12 +16,9 @@ router.get('/',checkNotLogin,function(req,res){
 });
 
 router.get('/login',checkNotLogin,function(req,res){
-	res.render('login',{page_title:"MultiBNB",errMSG:""});
+	res.render('login',{page_title:"MultiBNB"});
 });
 
-router.get('/reg', checkNotLogin,function(req,res){
-	res.render('reg',{page_title:"Sign up for new User",errMSG:""});
-});
 
 router.get('/home',checkLogin,function(req,res){
 	res.render('home',{page_title:"Homepage",user:req.session.user});
@@ -33,7 +29,7 @@ router.get('/viewmycars',checkLogin,viewmycars.framework);
 
 
 
-router.post('/reg',regist);
+router.post('/reg',logcontrol.regist);
 router.post('/login',logcontrol.login);
 router.get('/logout',logcontrol.logout);
 router.get('/searchCar',checkLogin,homecontrol.searchCar);

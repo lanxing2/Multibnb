@@ -1,32 +1,90 @@
 <%- include layout/header.ejs %>
 <div id="wrapper">
     <div class="page-header"><h2><%=page_title%></h2></div>
-    <div class="page-container">
-
-        <div class="page-data">
-            
-            <form method="post" action="/login">
-                <table cellpadding="11">
+    <div class="page-container" ng-app="loginApp" ng-controller="loginCtrl">
+<!--Sign in form-->     
+        <form name = "logform" class="page-data" ng-show="showLogin">            
+            <table cellpadding="11">
                 <tr>
-                    <td class="beforeinput">Name</td><td>: <input type="text" name="name" required ></td>
+                    <td class="beforeinput">Name</td><td>: <input type="text" name = "logusername" ng-change="checklog()" ng-model="userlog.username" required ></td>
+                    <td>
+                        <span style="color:red" ng-show="logform.logusername.$touched && logform.logusername.$invalid">
+                            <span ng-show="logform.logusername.$error.required">*Username is required.</span>
+                        </span>
+                    </td>
                 </tr>
                 <tr>
-                    <td class="beforeinput">Password</td><td>: <input type="password" name="password" required ></td>
+                    <td class="beforeinput">Password</td><td>: <input type="password" name = "logpassword" ng-change="checklog()" ng-model="userlog.password" required ></td>
+                    <td>
+                        <span style="color:red" ng-show="logform.logpassword.$touched && logform.logpassword.$invalid">
+                            <span ng-show="logform.logpassword.$error.required">*Password is required.</span>
+                        </span>
+                    </td>                    
+                </tr>
+                <tr>
+                    <td>
+                        &nbsp; <button class='button button-raised button-tiny button-action button-pill' ng-click="switchLogin()">Sign up</button>
+                    </td>
+                    <td>
+                        &nbsp; <button class='button button-raised button-small button-primary button-pill' ng-disabled="disableLogButton || logform.logusername.$touched && logform.logusername.$invalid || logform.logpassword.$touched  && logform.logpassword.$invalid" ng-click="login()">Sign in</button>
+                    </td>                 
+                </tr>
+            </table>
+            <p class="error">{{errlog}}</p>
+        </form>
+<!--Sign up form-->       
+        <form name = "regform" class="page-data" ng-show="!showLogin">
+            <table cellpadding="11">
+                <tr>
+                    <td class="beforeinput">Name</td><td>: <input type="text" name="regusername" ng-change="checkreg()" ng-model="userreg.username"  required ></td>
+                    <td>
+                        <span style="color:red" ng-show="regform.regusername.$touched && regform.regusername.$invalid">
+                            <span ng-show="regform.regusername.$error.required">*Username is required.</span>
+                        </span>
+                    </td>  
+                </tr>
+                <tr>
+                    <td class="beforeinput">Email</td><td>: <input type="email" name="regemail" ng-change="checkreg()" ng-model="userreg.email" required ></td>
+                    <td>
+                        <span style="color:red" ng-show="regform.regemail.$touched && regform.regemail.$invalid">
+                            <span ng-show="regform.regemail.$error.email">*Invalid email address.</span>
+                            <span ng-show="regform.regemail.$error.required">*Email is required.</span>
+                        </span>                    
+                    </td>
+                </tr>
+                <tr>
+                    <td class="beforeinput">Password</td><td>: <input type="password" name="regpassword" ng-change="checkreg()" ng-model="userreg.password" required ></td>
+                    <td>
+                        <span style="color:red" ng-show="regform.regpassword.$touched && regform.regpassword.$invalid">
+                            <span ng-show="regform.regpassword.$error.required">*Password is required.</span>
+                        </span>
+                    </td>                      
+                </tr>
+                <tr>
+                    <td class="beforeinput">Confirm Password</td><td>: <input type="password" name="regpassword2" ng-change="checkreg()" ng-model="userreg.password2" required ></td>
+                    <td>
+                        <span style="color:red" ng-show="regform.regpassword2.$touched && regform.regpassword2.$invalid">
+                            <span ng-show="regform.regpassword2.$error.required">*Re-enter the password.</span>
+                        </span>
+                        <span style="color:red" ng-show="regform.regpassword2.$dirty">
+                            <span ng-show="!dupPass">*Password must be same</span>
+                        </span>                        
+                    </td>  
                  </tr>
                  <tr>
-                    <td class="beforeinput"></td>
                     <td>
-                        &nbsp; <input type="submit" name="submit" value="Sign in">
+                        &nbsp; <button class='button button-raised button-tiny button-action button-pill' ng-click="switchLogin()">Sign in</button>
                     </td>
 
                     <td>
-                        &nbsp; <input type="button" value="Sign up" onclick="javascript:window.location.href='/reg'"> 
+                        &nbsp; <button class='button button-raised button-small button-primary button-pill' ng-disabled="disableRegButton || regform.regusername.$touched && regform.regusername.$invalid || regform.regemail.$touched && regform.regemail.$invalid || regform.regpassword2.$touched && regform.regpassword2.$invalid || regform.regpassword.$touched && regform.regpassword.$invalid" ng-click="regist()">Sign up</button>
                     </td>
                  </tr>
-                </table>
-            </form>
-            <p class="error"><%=errMSG%></p>
-        </div>
+            </table>
+            <p class="error">{{errreg}}</p>
+        </form>
     </div>    
-</div>         
+</div>
+
+
 <%- include layout/footer.ejs %>
