@@ -1,38 +1,35 @@
 <%- include layout/header.ejs %>
 <ul class="nav nav-tabs">
-  <li class="active"><a href="/home">Home</a></li>
-  <li><a href="/postnewcar">Post new car</a></li>
-  <li><a href="/viewmycars">View my cars</a></li>
-  <li><a href="/bookinghistory">Booking history</a></li>
-  <li><a href="/logout">Log out</a></li>
+	<li class="active"><a href="/home">Home</a></li>
+  	<li><a href="/postnewcar">Post new car</a></li>
+  	<li><a href="/viewmycars">View my cars</a></li>
+  	<li><a href="/bookinghistory">Booking history</a></li>
+  	<li><a href="/logout">Log out</a></li>
 </ul>
 
 <div id = "searchCar">
-  <table cellpadding="11">
-    <tr>
-        <td class="beforeinput">Welcome to MultiBNB: <%=user%> </td>
-    </tr>
-  </table>
-  <table cellpadding="11">
-    <tr>
-        <td class="beforeinput">Distance(km):</td><td> <input type="number" id="distance" min="0" max="500" value="10"required ></td>
-   	</tr>
-   	<tr>
-        <td class="beforeinput">Start Date:</td><td> <input type="date" id="start" placeholder="mm/dd/yyyy" required ></td>
-   	</tr>
-   	<tr>
-        <td class="beforeinput">End Date:</td><td> <input type="date" id="end" placeholder="mm/dd/yyyy" required ></td>
-   	</tr>
-   	<tr>
-        <td class="beforeinput"> </td>
-        <td>
-          <button class="button button-3d button-primary button-rounded" onclick="searchCar()">Search</button>
-        </td>
-    </tr>
-  </table>
-  <p> </p>
-  <div id = "selectedcar"></div>
-  <div id = "homeimg"></div>
+  	<table cellpadding="11">
+    		<tr>
+        		<td class="beforeinput">Welcome to MultiBNB: <%=user%> </td>
+    		</tr>
+  	</table>
+  	<table cellpadding="11">
+    		<tr>
+        		<td class="beforeinput">Distance(km):</td><td> <input type="number" id="distance" min="0" max="500" value="10"required ></td>
+   		</tr>
+   		<tr>
+        		<td class="beforeinput">Start Date:</td><td> <input type="date" id="start" placeholder="mm/dd/yyyy" required ></td>
+   		</tr>
+   		<tr>
+        		<td class="beforeinput">End Date:</td><td> <input type="date" id="end" placeholder="mm/dd/yyyy" required ></td>
+   		</tr>
+   		<tr>
+        		<td class="beforeinput"> </td>
+        		<td><button class="button button-3d button-primary button-rounded" onclick="searchCar()">Search</button></td>
+    		</tr>
+  	</table>
+  	<div id = "selectedcar"></div>
+  	<div id = "homeimg"></div>
 </div>
 <div id = "maphome"></div>
 
