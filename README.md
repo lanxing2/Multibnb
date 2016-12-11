@@ -27,3 +27,6 @@ If you want to visit our website, you can go to the following link. The website 
 
 
 Author: Xing Lan      Wenjin Guo
+
+
+12/11/2016 Angular Update merge login and register page
