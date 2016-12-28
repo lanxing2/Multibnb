@@ -19,7 +19,7 @@ module.exports = {
             var prefix = crypto.createHash('md5').update(fields.carID[0]).digest('hex').substring(0,16);
             console.log(prefix);            
             for(var i=0;i<files.carimage.length;i++){
-                var randomname = randomString(16);
+                var randomname = randomString(16);              //generate random file name
                 var newname = "./public/carimg/"+randomname+files.carimage[i].path.substring(14);
                 fs.renameSync(files.carimage[i].path,newname);
                 var newimage = new carImageModel({
@@ -84,6 +84,7 @@ module.exports = {
 
 };
 
+//generate random string
 function randomString(len) {  
 　　len = len || 32;
 　　var $chars = 'ABCDEFGHJKMNPQRSTWXYZabcdefhijkmnprstwxyz0123456789';    
