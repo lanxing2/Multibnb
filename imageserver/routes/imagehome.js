@@ -9,7 +9,8 @@ module.exports = {
     },
     postimage: function postimage(req , res ){
         //Set the CORS ACCESS
-        res.header("Access-Control-Allow-Origin", "*");
+        res.setheader("Access-Control-Allow-Origin", "*");
+        //res.setHeader('Access-Control-Allow-Origin', 'http://multibnb.us-east-1.elasticbeanstalk.com');
         res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
         var form = new multiparty.Form();
         form.uploadDir = "./public/carimg/"
@@ -42,7 +43,8 @@ module.exports = {
 
     searchimage: function searchimage(req , res ){
         //Set the CORS ACCESS
-        res.header("Access-Control-Allow-Origin", "*");
+        res.setheader("Access-Control-Allow-Origin", "*");
+        //res.setHeader('Access-Control-Allow-Origin', 'http://multibnb.us-east-1.elasticbeanstalk.com');
         res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
         var carID = req.body.carID;
         var images = [];
@@ -62,7 +64,8 @@ module.exports = {
     },
     deleteoneimage: function deleteoneimage(req , res ){
         //Set the CORS ACCESS
-        res.header("Access-Control-Allow-Origin", "*");
+        res.setheader("Access-Control-Allow-Origin", "*");
+        //res.setHeader('Access-Control-Allow-Origin', 'http://multibnb.us-east-1.elasticbeanstalk.com');
         res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
         var path = req.body.path;
         var deletefile = "./public"+path; 
@@ -81,7 +84,7 @@ module.exports = {
 
 };
 
-function randomString(len) {
+function randomString(len) {  
 　　len = len || 32;
 　　var $chars = 'ABCDEFGHJKMNPQRSTWXYZabcdefhijkmnprstwxyz0123456789';    
 　　var maxPos = $chars.length;
